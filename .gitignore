@@ -1,0 +1,35 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vault files (very important)
+*.pvault
+vault.dat
+*.vault
+
+# Exports (plaintext risk)
+export*.json
+export*.csv
+
+# Environment variables
+.env
