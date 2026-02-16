@@ -1,6 +1,6 @@
 # secure_password_storage
-
-#small project to learn about secure storage practices
+Educational project, should not be used (yet)
+small project to learn about secure storage practices
 
 passvault init creates a vault file on disk, storing KDF parameters + salt + encrypted payload.
 
