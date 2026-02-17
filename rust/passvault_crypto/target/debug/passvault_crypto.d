@@ -1,1 +1,0 @@
-C:\Users\girik\Code\SecureStorage\secure_password_storage\rust\passvault_crypto\target\debug\passvault_crypto.exe: C:\Users\girik\Code\SecureStorage\secure_password_storage\rust\passvault_crypto\src\main.rs

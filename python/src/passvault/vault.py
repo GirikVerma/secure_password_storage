@@ -7,6 +7,8 @@ vault = {
     }
 }
 
+#convert inputs into a json format 
+
 def add_entry(service, username, password):
     vault["entries"][service] = {
         "username": username,
