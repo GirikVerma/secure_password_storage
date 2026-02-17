@@ -33,4 +33,4 @@ export*.csv
 
 # Environment variables
 .env
-test.txt
+
