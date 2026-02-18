@@ -74,7 +74,9 @@ fn main() {
         }
 
         "decrypt" => {
-            println!("decrypt");
+            // read in data from vault.dat
+            
+
         }
         _ => {
             eprintln!("Invalid mode");

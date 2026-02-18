@@ -15,6 +15,8 @@ def encode_vault(master_password) -> str:
         "master_password": master_password,
         "data": b64_text
     }
+    
+
 
     request_json = json.dumps(request)
     return(request_json)
@@ -30,3 +32,26 @@ def encrypt_vault(request_json: str) -> str:
     else:
         result = subprocess.run(["rust/passvault_crypto/target/debug/passvault_crypto"], input=request_json, text=True, capture_output=True)
     return result.stdout
+
+def decrypt_vault(master_password) -> str:
+    #remake request so that we are decrypting, and the request data contains all encrypted passwords. 
+    request = {
+        "mode": "decrypt",
+        "master_password": master_password,
+        "data": None
+    }
+    with open("vault.dat", "r") as f:
+        json_file = json.load(f)
+        request["data"] = json_file["data"]
+        
+    import subprocess
+    #use host OS to determine which file path should be called
+    request_json  = json.dumps(request)
+    system = platform.system()
+
+    if system == "Windows":
+        result = subprocess.run(["rust/passvault_crypto/target/debug/passvault_crypto.exe"], input=request_json, text=True, capture_output=True)
+    else:
+        result = subprocess.run(["rust/passvault_crypto/target/debug/passvault_crypto"], input=request_json, text=True, capture_output=True)
+    return result.stdout
+    

@@ -28,7 +28,7 @@ def cli(master_password):
     print("Welcome to PassVault CLI!")
     print("Please choose an option:")
     print("1. Add a new password")
-    print("2. Retrieve a password")
+    print("2. Retrieve passwords")
     print("3. Exit")
     choice = input("")
     match choice:
