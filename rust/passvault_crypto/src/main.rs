@@ -1,7 +1,8 @@
 use std::io::{self, Read};
 use serde::{Serialize, Deserialize};
 use argon2::Argon2;
-use cha20poly1305::{aead::{Aead, KeyInit},ChaCha20Poly1305, Key, Nonce};
+use chacha20poly1305::{aead::{Aead, KeyInit},ChaCha20Poly1305, Key, Nonce,};
+use rand::{rngs::OsRng, RngCore};
 
 // Define request and response structures
 #[derive(Deserialize)]
@@ -18,11 +19,11 @@ struct Response {
 
 fn encrypt(master_password: &str, plaintext_json: &[u8]) -> Result<Vec<u8>, String> {
     //Define a 16 byte arrary for the salt and fill it with random bytes
-    let mut salt = [0u8; 16]
+    let mut salt = [0u8; 16];
     OsRng.fill_bytes(&mut salt);
 
     //Create a version number
-    let const VERSION: u8 = 1;
+    const VERSION: u8 = 1;
 
     //Create the vector that will actually be storing all of this (version + salt + nonce + ciphertext) 
     let mut blob = Vec::with_capacity(1 + 16 + 12 + plaintext_json.len());
@@ -30,10 +31,10 @@ fn encrypt(master_password: &str, plaintext_json: &[u8]) -> Result<Vec<u8>, Stri
     //Derive key
     let mut key = [0u8; 32];
     let argon2 = Argon2::default();
-    argon2.hash_password_into(master_password.as_bytes(), &salt, &mut key)
+    argon2.hash_password_into(master_password.as_bytes(), &salt, &mut key);
 
     //generate nonce
-    let mut nonce = [0u8; 12]
+    let mut nonce = [0u8; 12];
     OsRng.fill_bytes(&mut nonce);
 
     //generate ciphertext using ChaCha20Poly1305
