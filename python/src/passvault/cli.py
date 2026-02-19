@@ -1,5 +1,5 @@
 from vault import add_entry
-from bindings import encode_vault, encrypt_vault
+from bindings import encode_vault, encrypt_vault, decrypt_vault
 import os 
 
 #checks if an existing vault configuration exists
@@ -49,7 +49,8 @@ def cli(master_password):
             with open("vault.dat", "w") as f:
                 f.write(encrypted_dump)
         case "2":
-            print("Not implemented yet")
+            print("Enter master password")
+            decrypted_passwords = decrypt_vault(master_password)
         case "3":
             exit()
 def main():

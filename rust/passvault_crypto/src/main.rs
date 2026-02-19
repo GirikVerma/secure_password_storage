@@ -1,8 +1,14 @@
 use std::io::{self, Read};
+use std::convert::TryInto;
 use serde::{Serialize, Deserialize};
 use argon2::Argon2;
 use chacha20poly1305::{aead::{Aead, KeyInit},ChaCha20Poly1305, Key, Nonce,};
 use rand::{rngs::OsRng, RngCore};
+
+//Constants
+const VERSION: u8 = 1;
+const SALT_LEN: usize = 16;
+const NONCE_LEN: usize = 12;
 
 // Define request and response structures
 #[derive(Deserialize)]
@@ -18,15 +24,12 @@ struct Response {
 }
 
 fn encrypt(master_password: &str, plaintext_json: &[u8]) -> Result<Vec<u8>, String> {
+    //Create the vector that will actually be storing all of this (version + salt + nonce + ciphertext) 
+    let mut blob = Vec::with_capacity(1 + 16 + 12 + plaintext_json.len());
+
     //Define a 16 byte arrary for the salt and fill it with random bytes
     let mut salt = [0u8; 16];
     OsRng.fill_bytes(&mut salt);
-
-    //Create a version number
-    const VERSION: u8 = 1;
-
-    //Create the vector that will actually be storing all of this (version + salt + nonce + ciphertext) 
-    let mut blob = Vec::with_capacity(1 + 16 + 12 + plaintext_json.len());
 
     //Derive key
     let mut key = [0u8; 32];
@@ -41,17 +44,50 @@ fn encrypt(master_password: &str, plaintext_json: &[u8]) -> Result<Vec<u8>, Stri
     let cipher_text = ChaCha20Poly1305::new(Key::from_slice(&key)).encrypt(Nonce::from_slice(&nonce), plaintext_json)
         .map_err(|e| format!("Encryption failed: {}", e))?;
 
-
-
     //Fill in the vector space
     blob.push(VERSION);
     blob.extend_from_slice(&salt);
     blob.extend_from_slice(&nonce);
     blob.extend_from_slice(&cipher_text);
 
-
     //Return blob 
     Ok(blob)
+}
+
+fn decrypt(master_password: &str, ciphertext_json: &[u8]) -> Result<Vec<u8>, String>{
+    //Make sure that the ciphertext is of expected length (45 in this case)
+    if ciphertext_json.len() < 45 {
+        return Err("Blob to short".to_string());
+    }
+
+    //Get version number 
+    let version = ciphertext_json[0];
+    if version != VERSION{
+        return Err("Version mismatch".to_string())
+    }
+
+    //Get salt
+    let salt: [u8; 16] = ciphertext_json[1..17]
+        //make sure the salt is 16 bytes
+        .try_into()
+        .map_err(|_| "Salt parse failed".to_string())?;
+    
+    //Get nonce 
+    let nonce: [u8; 12] = ciphertext_json[17..29]
+        //Make sure its 12 bytes
+        .try_into()
+        .map_err(|_| "Salt parse failed".to_string())?;
+
+    //Ciphertext 
+    let ciphertext = ciphertext_json[29..]
+
+    //Key 
+    let mut key = [0u8; 32];
+    let argon2 = Argon2::default();
+    argon2.hash_password_into(master_password.as_bytes(), &salt, &mut key);
+
+    
+
 }
 
 fn main() {
@@ -75,7 +111,7 @@ fn main() {
 
         "decrypt" => {
             // read in data from vault.dat
-            
+
 
         }
         _ => {
