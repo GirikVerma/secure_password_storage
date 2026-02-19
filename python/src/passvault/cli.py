@@ -51,6 +51,8 @@ def cli(master_password):
         case "2":
             print("Enter master password")
             decrypted_passwords = decrypt_vault(master_password)
+            print("Decrypted passwords: ")
+            print(decrypted_passwords)
         case "3":
             exit()
 def main():
