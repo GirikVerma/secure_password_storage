@@ -1,11 +1,19 @@
 from vault import add_entry
 from bindings import encode_vault, encrypt_vault, decrypt_vault
 import os 
+import json
+import atexit
 
 #checks if an existing vault configuration exists
 def startup():
     if os.path.exists("vault.dat"):
         print("found!")
+        print("Enter master password")
+        master_password = input("")
+        #Make sure password is actually correct
+        decrypted_passwords = decrypt_vault(master_password)
+        sanity_check = json.loads(decrypted_passwords)
+        return master_password
     else:
         #create .dat file and set passwords
         print("no existing vault found, creating vault.")
@@ -20,6 +28,7 @@ def startup():
                 if input("") != master_password:
                     print("Passwords do not match")
                 else:
+                    print("*Note that if an entry is not created in this session, you will have to recreate the password next login*")
                     return master_password
             else:
                 print("Password is too short!")
@@ -29,7 +38,8 @@ def cli(master_password):
     print("Please choose an option:")
     print("1. Add a new password")
     print("2. Retrieve passwords")
-    print("3. Exit")
+    print("3. Reset vault")
+    print("4. Exit")
     choice = input("")
     match choice:
         case "1":
@@ -49,16 +59,26 @@ def cli(master_password):
             with open("vault.dat", "w") as f:
                 f.write(encrypted_dump)
         case "2":
-            print("Enter master password")
             decrypted_passwords = decrypt_vault(master_password)
             print("Decrypted passwords: ")
-            print(decrypted_passwords)
+            print(json.loads(decrypted_passwords))
         case "3":
+            print("Are you sure that you would like to reset your password and vault? This action cannot be reversed. (y/n)")
+            if input("").lower() == "y":
+                os.remove("vault.dat")
+                print("Vault reset successful!")
+                exit()
+        case "4":
             exit()
+
+def exit_handler():
+    print("Exiting PassVault...")
+
 def main():
     master_password = startup()
     while True:
         cli(master_password)
 
 if __name__ == "__main__":
+    atexit.register(exit_handler)
     main()
