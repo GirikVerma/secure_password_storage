@@ -79,15 +79,18 @@ fn decrypt(master_password: &str, ciphertext_json: &[u8]) -> Result<Vec<u8>, Str
         .map_err(|_| "Salt parse failed".to_string())?;
 
     //Ciphertext 
-    let ciphertext = ciphertext_json[29..]
+    let ciphertext = &ciphertext_json[29..];
 
     //Key 
     let mut key = [0u8; 32];
     let argon2 = Argon2::default();
     argon2.hash_password_into(master_password.as_bytes(), &salt, &mut key);
 
-    
+    //Decrypt ciphertext + tag 
+    let plain_text = ChaCha20Poly1305::new(Key::from_slice(&key)).decrypt(Nonce::from_slice(&nonce), ciphertext)
+        .map_err(|e| format!("Decryption failed: {}", e))?;
 
+    Ok(plain_text)
 }
 
 fn main() {
@@ -97,10 +100,10 @@ fn main() {
 
     // check what mode we are in and call the appropriate function
     match request.mode.as_str() {
-
         "encrypt" => {  
             // decode the base64 encoded input
             let plaintext_json = base64::decode(&request.data).unwrap();
+            //call encrypt function
             let encrypted_bytes = encrypt(&request.master_password, &plaintext_json);
             // encode the encrypted json as base64 and send it back
             let encrypted_bytes_base64 = base64::encode(&encrypted_bytes.unwrap());
@@ -110,9 +113,15 @@ fn main() {
         }
 
         "decrypt" => {
-            // read in data from vault.dat
-
-
+            // decode the base64 encoded input
+            let ciphertext_json = base64::decode(&request.data).unwrap();
+            //call decrypt function
+            let decrypted_bytes = decrypt(&request.master_password, &ciphertext_json).unwrap();
+            //format response
+            let decrypted_string = String::from_utf8(decrypted_bytes).unwrap();
+            let response = Response {data: decrypted_string};
+            let output = serde_json::to_string(&response).unwrap();
+            println!("{}", output);
         }
         _ => {
             eprintln!("Invalid mode");
