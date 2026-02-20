@@ -20,7 +20,9 @@ struct Request {
 
 #[derive(Serialize)]
 struct Response {
-    data: String
+    status: String,
+    data: Option<String>,
+    error: Option<String>
 }
 
 fn encrypt(master_password: &str, plaintext_json: &[u8]) -> Result<Vec<u8>, String> {
@@ -57,13 +59,13 @@ fn encrypt(master_password: &str, plaintext_json: &[u8]) -> Result<Vec<u8>, Stri
 fn decrypt(master_password: &str, ciphertext_json: &[u8]) -> Result<Vec<u8>, String>{
     //Make sure that the ciphertext is of expected length (45 in this case)
     if ciphertext_json.len() < 45 {
-        return Err("Blob to short".to_string());
+        return Err("Blob too short".to_string());
     }
 
     //Get version number 
     let version = ciphertext_json[0];
     if version != VERSION{
-        return Err("Version mismatch".to_string())
+        return Err("Version mismatch".to_string());
     }
 
     //Get salt
@@ -85,6 +87,7 @@ fn decrypt(master_password: &str, ciphertext_json: &[u8]) -> Result<Vec<u8>, Str
     let mut key = [0u8; 32];
     let argon2 = Argon2::default();
     argon2.hash_password_into(master_password.as_bytes(), &salt, &mut key);
+        .map_err(|e| format!("Key derivation failed {}", e))?;
 
     //Decrypt ciphertext + tag 
     let plain_text = ChaCha20Poly1305::new(Key::from_slice(&key)).decrypt(Nonce::from_slice(&nonce), ciphertext)
@@ -107,7 +110,7 @@ fn main() {
             let encrypted_bytes = encrypt(&request.master_password, &plaintext_json);
             // encode the encrypted json as base64 and send it back
             let encrypted_bytes_base64 = base64::encode(&encrypted_bytes.unwrap());
-            let response = Response {data: encrypted_bytes_base64};
+            let response = Response {status: "ok".to_string(), data: Some(encrypted_bytes_base64), error: None};
             let output = serde_json::to_string(&response).unwrap();
             println!("{}", output);
         }
@@ -119,7 +122,7 @@ fn main() {
             let decrypted_bytes = decrypt(&request.master_password, &ciphertext_json).unwrap();
             //format response
             let decrypted_string = String::from_utf8(decrypted_bytes).unwrap();
-            let response = Response {data: decrypted_string};
+            let response = Response {status: "ok".to_string(), data: Some(decrypted_string), error: None};
             let output = serde_json::to_string(&response).unwrap();
             println!("{}", output);
         }

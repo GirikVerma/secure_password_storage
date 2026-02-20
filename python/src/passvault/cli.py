@@ -3,16 +3,23 @@ from bindings import encode_vault, encrypt_vault, decrypt_vault
 import os 
 import json
 import atexit
+import getpass
 
 #checks if an existing vault configuration exists
 def startup():
+    verified = False
     if os.path.exists("vault.dat"):
         print("found!")
-        print("Enter master password")
-        master_password = input("")
-        #Make sure password is actually correct
-        decrypted_passwords = decrypt_vault(master_password)
-        sanity_check = json.loads(decrypted_passwords)
+        while verified == False:
+            print("Enter master password")
+            master_password = getpass.getpass("")
+            #Make sure password is actually correct
+            try:
+                decrypted_passwords = decrypt_vault(master_password)
+                sanity_check = json.loads(decrypted_passwords)
+                verified = True
+            except json.JSONDecodeError:
+                    print("Your password was incorrect!")
         return master_password
     else:
         #create .dat file and set passwords
@@ -20,12 +27,12 @@ def startup():
         #loop until password matces requirements and is confirmed
         while True:
             print("Create a master password:")
-            master_password = input("")
+            master_password = getpass.getpass("")
             #ensure password length (or any other future requirements I choose to add) 
             if len(master_password) >= 8:
                 #confirm password matches
                 print("Confirm password:")
-                if input("") != master_password:
+                if getpass.getpass("") != master_password:
                     print("Passwords do not match")
                 else:
                     print("*Note that if an entry is not created in this session, you will have to recreate the password next login*")
@@ -67,7 +74,9 @@ def cli(master_password):
             if input("").lower() == "y":
                 os.remove("vault.dat")
                 print("Vault reset successful!")
-                exit()
+                main()
+            else:
+                print("Vault reset cancelled!")
         case "4":
             exit()
 
