@@ -66,9 +66,12 @@ def cli(master_password):
             with open("vault.dat", "w") as f:
                 f.write(encrypted_dump)
         case "2":
-            decrypted_passwords = decrypt_vault(master_password)
-            print("Decrypted passwords: ")
-            print(json.loads(decrypted_passwords))
+            if os.path.exists("vault.dat"):
+                decrypted_passwords = decrypt_vault(master_password)
+                print("Decrypted passwords: ")
+                print(json.loads(decrypted_passwords))
+            else:
+                print("Error: file vault.dat is missing, or no password was ever encrypted")
         case "3":
             print("Are you sure that you would like to reset your password and vault? This action cannot be reversed. (y/n)")
             if input("").lower() == "y":
