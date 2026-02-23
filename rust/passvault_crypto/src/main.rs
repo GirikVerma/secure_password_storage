@@ -86,7 +86,7 @@ fn decrypt(master_password: &str, ciphertext_json: &[u8]) -> Result<Vec<u8>, Str
     //Key 
     let mut key = [0u8; 32];
     let argon2 = Argon2::default();
-    argon2.hash_password_into(master_password.as_bytes(), &salt, &mut key);
+    argon2.hash_password_into(master_password.as_bytes(), &salt, &mut key)
         .map_err(|e| format!("Key derivation failed {}", e))?;
 
     //Decrypt ciphertext + tag 
